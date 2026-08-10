@@ -6,6 +6,16 @@ Pi Agent 已经有很好的技能系统和扩展 API，但缺少"自动创建/�
 
 ## 安装
 
+### 通过 npm（推荐）
+
+```bash
+pi install npm:pi-agent-skill-evolution
+```
+
+Pi 会自动发现并加载扩展和技能，无需任何设置变更。
+
+### 直接复制（最轻量）
+
 ```bash
 # 扩展
 cp extensions/skill-evolution.ts ~/.pi/agent/extensions/
@@ -15,7 +25,7 @@ mkdir -p ~/.pi/agent/skills/skill-authoring
 cp skill-authoring/SKILL.md ~/.pi/agent/skills/skill-authoring/
 ```
 
-Pi 会自动发现并加载，无需设置变更。
+Pi 会自动发现并加载。
 
 ## 环境变量
 

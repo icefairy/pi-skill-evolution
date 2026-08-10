@@ -10,7 +10,7 @@ that gap on top of Pi's event-driven architecture.
 ## What it does
 
 | Capability | Description |
-|------------|-------------|
+| ------------ | ------------- |
 | Auto-create skills | After a complex task, the agent saves the workflow as a skill via `skill_manage` |
 | Auto-patch skills | When an existing skill can be improved, uses `patch` for minimal, safe edits |
 | Background review loop | After each session, the agent self-audits and decides whether to save/update skills |
@@ -31,7 +31,17 @@ pi-skill-evolution/
 
 ## Installation
 
-### Direct copy (easiest)
+### Via npm (recommended)
+
+```bash
+pi install npm:pi-agent-skill-evolution
+```
+
+This installs the published npm package, which bundles the extension and the authoring skill. Pi auto-discovers both — no settings changes needed.
+
+Browse the package gallery at [pi.dev/packages](https://pi.dev/packages).
+
+### Direct copy (lightweight)
 
 ```bash
 # Extension
@@ -43,14 +53,6 @@ cp skill-authoring/SKILL.md ~/.pi/agent/skills/skill-authoring/
 ```
 
 Pi auto-discovers both — no settings changes needed.
-
-### As a Pi package
-
-```bash
-pi install git:github.com/<your-org>/pi-skill-evolution
-```
-
-Requires a `package.json` with `pi.extensions` and `pi.skills` entries (see [Dev section](#development) below).
 
 ### Environment variables
 
@@ -65,7 +67,7 @@ Requires a `package.json` with `pi.extensions` and `pi.skills` entries (see [Dev
 The extension registers a `skill_manage` tool callable by the LLM:
 
 | Operation | Required params | What it does |
-|-----------|----------------|--------------|
+| ----------- | ---------------- | -------------- |
 | `create` | `skillName`, `description`, `content?` | Creates a new skill |
 | `edit` | `skillName`, `description`, `content` | Full rewrite of an existing skill |
 | `patch` | `skillName`, `find`, `replace?` | Exact find-and-replace inside SKILL.md (preferred — safest) |
@@ -109,7 +111,7 @@ skills with `skill_manage`:
 ## Hermes Agent vs pi-skill-evolution
 
 | Dimension | Hermes Agent | pi-skill-evolution |
-|-----------|-------------|-------------------|
+| ----------- | ------------- | ------------------- |
 | Review trigger | Daemon thread (`spawn_background_review`) | `agent_settled` event + `sendUserMessage` followUp |
 | Skill management | Python `skill_manager_tool.py` | TypeScript `pi.registerTool()` |
 | Prompt injection | `prompt_builder.py` hardcoded layer | `before_agent_start` event chain |
@@ -130,24 +132,18 @@ pi --extension /path/to/extensions/skill-evolution.ts \
    -p "List all skills with skill_manage"
 ```
 
-### Package as a Pi npm/git package
+### Publish a new version
 
-Create `package.json` at the repo root:
+The project is published as `pi-agent-skill-evolution` on npmjs.
+To release a new version:
 
-```json
-{
-  "name": "pi-skill-evolution",
-  "version": "0.1.0",
-  "type": "module",
-  "pi": {
-    "extensions": ["./extensions/skill-evolution.ts"],
-    "skills": ["./skill-authoring"]
-  },
-  "dependencies": {}
-}
+```bash
+cd pi-skill-evolution
+npm version patch     # or minor/major
+npm publish
 ```
 
-Then install with `pi install .` or publish to npm / a git repo.
+The `pi-package` keyword in `package.json` ensures it appears on [pi.dev/packages](https://pi.dev/packages).
 
 ## Compatibility
 
