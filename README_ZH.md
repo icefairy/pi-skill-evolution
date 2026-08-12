@@ -34,3 +34,13 @@ Pi 会自动发现并加载。
 | `PI_SKILL_EVOLUTION_DIR` | `~/.pi/agent/skills/` | 技能存储目录 |
 
 更多细节见 [README.md](README.md)。
+
+## 新增功能：使用统计与不活跃提醒（v0.1.2+）
+
+本扩展增加了技能使用次数记录和每周不活跃提醒功能：
+
+- 每次 `skill_manage` 调用自动记录使用次数和时间戳
+- 每 7 天检查一次超过 30 天未使用的技能，通过 follow-up 消息提醒用户
+- 使用 `/skill-evolution reminder on/off/status/check` 管理提醒开关（持久化）
+- 使用 `/skill-evolution disable <name>` / `enable <name>` 禁用/启用技能
+- 使用 `/skill-evolution stats` / `inactive` 查看统计和不活跃技能

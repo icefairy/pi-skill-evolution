@@ -15,6 +15,9 @@ that gap on top of Pi's event-driven architecture.
 | Auto-patch skills | When an existing skill can be improved, uses `patch` for minimal, safe edits |
 | Background review loop | After each session, the agent self-audits and decides whether to save/update skills |
 | Progressive disclosure | Only skill names + descriptions sit in the system prompt; full content loads on demand |
+| **Usage tracking** | Every `skill_manage` call records usage count + timestamp in `.skill-stats.json` |
+| **Weekly inactive-skill reminder** | Every 7 days, Pi reminds you about skills unused for 30+ days |
+| **Disable/enable skills** | Rename a skill dir to `.disabled-<name>` so Pi stops discovering it, without deleting it |
 
 ## Files
 
@@ -62,6 +65,34 @@ Pi auto-discovers both — no settings changes needed.
 
 ## How it works
 
+### Usage statistics
+
+Every time the LLM calls `skill_manage` (create, edit, patch, inspect, delete, list), the extension records:
+
+- **Count** — total number of successful invocations
+- **lastUsed** — ISO timestamp of the most recent successful call
+- **description** — latest description passed (for create/edit)
+
+Data is stored in `~/.pi/agent/skills/.skill-stats.json` and persists across sessions.
+
+### Weekly inactive-skill reminder
+
+On every `session_start`, the extension checks:
+
+1. Is the reminder enabled? (default: **yes**)
+2. Has it been ≥ 7 days since the last check?
+3. Are there any skills that haven't been used in ≥ 30 days?
+
+If all three pass, Pi sends a follow-up message listing inactive skills with suggestions to disable/remove them. The reminder can be toggled persistently via the `/skill-evolution` command (see below).
+
+### Disable / enable skills
+
+Instead of deleting a skill you may want to keep, you can **disable** it:
+
+- `disable` renames `<name>/` → `.disabled-<name>/`, so Pi's skill discovery skips it
+- `enable` renames it back, restoring it to active status
+- Disabled skills still appear in stats but are excluded from `skill_manage list` and the inactive reminder scan
+
 ### `skill_manage` tool
 
 The extension registers a `skill_manage` tool callable by the LLM:
@@ -96,6 +127,32 @@ skills with `skill_manage`:
 > discover a new workflow, or recover from an unexpected failure? If yes, use
 > skill_manage to create or patch a skill. Be proactive — most sessions produce
 > at least one skill update.
+
+### `/skill-evolution` command (extended)
+
+The `/skill-evolution` slash command now supports subcommands for managing
+usage tracking and inactive-skill reminders. All settings are persisted to
+`.skill-stats.json` and survive Pi restarts.
+
+| Command | What it does |
+| --------- | ------------ |
+| `/skill-evolution reminder on` | Enable weekly inactive-skill reminder (default) |
+| `/skill-evolution reminder off` | Disable the weekly reminder |
+| `/skill-evolution reminder status` | Show whether reminders are on/off + last check time |
+| `/skill-evolution reminder check` | Manually trigger an inactive-skill scan right now |
+| `/skill-evolution inactive` | List skills unused for 30+ days |
+| `/skill-evolution stats` | Show usage count + last-used for every tracked skill |
+| `/skill-evolution disable <name>` | Rename `<name>/` → `.disabled-<name>/` (Pi stops discovering it) |
+| `/skill-evolution enable <name>` | Rename `.disabled-<name>/` → `<name>/` (restore it) |
+| `/skill-evolution` (no args) | Show help with all available subcommands |
+
+Disabled skills are excluded from:
+
+- `skill_manage list` results
+- The weekly inactive-skill reminder scan
+- Pi's skill auto-discovery (they don't appear in the system prompt)
+
+They are still tracked in usage stats and can be re-enabled at any time.
 
 ### Skill authoring playbook
 
