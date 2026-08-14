@@ -4,6 +4,14 @@
 
 Pi Agent 已经有很好的技能系统和扩展 API，但缺少"自动创建/修改/进化技能"的闭环能力——这正是 Hermes Agent 通过 `background_review` 和 `skill_manage` 实现的核心特性。本仓库在 Pi 的 event-driven 架构上补齐这块拼图。
 
+## Review 频率
+
+### Background review loop
+
+默认每 10 次 settled turn 触发一次 review（比 3 次更节制，避免刷屏；比 25 次更紧凑，不丢失上下文）。同时支持手动触发：`/skill-evolution review now`。
+
+消息已精简为**单行带时间戳**，不会把会话输出刷乱。
+
 ## 安装
 
 ### 通过 npm（推荐）

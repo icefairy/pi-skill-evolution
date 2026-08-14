@@ -195,7 +195,9 @@ function listSkills(skillsDir: string) {
 			content: [
 				{
 					type: "text" as const,
-					text: "No skills directory found. Skills will be created in: " + skillsDir,
+					text:
+						"No skills directory found. Skills will be created in: " +
+						skillsDir,
 				},
 			],
 			details: {},
@@ -266,10 +268,7 @@ function buildReminderText(enabled: boolean, lastCheck: string | null): string {
 	return `Reminder: ${status} | ${check}`;
 }
 
-function buildStatsReport(
-	skillsDir: string,
-	stats: SkillStats,
-): string[] {
+function buildStatsReport(skillsDir: string, stats: SkillStats): string[] {
 	const allSkillNames = existsSync(skillsDir)
 		? readdirSync(skillsDir).filter((f) => {
 				if (
@@ -293,10 +292,7 @@ function buildStatsReport(
 		"--- Per-Skill Usage ---",
 	];
 
-	const allNames = new Set([
-		...allSkillNames,
-		...Object.keys(stats.usage),
-	]);
+	const allNames = new Set([...allSkillNames, ...Object.keys(stats.usage)]);
 	const sorted = [...allNames].sort();
 	for (const name of sorted) {
 		const entry = stats.usage[name];
@@ -332,24 +328,22 @@ export default function (pi: ExtensionAPI) {
 	pi.on("agent_settled", (_event, ctx) => {
 		if (!ctx.isIdle()) return;
 		reviewCooldown += 1;
-		if (reviewCooldown % 3 !== 0) return;
+		// Keep the review cadence moderate: 10 settled turns by default.
+		// Too frequent (3) floods the conversation; too sparse (25+) risks
+		// missing the moment before context is lost. Use /skill-evolution
+		// review now for on-demand triggers.
+		if (reviewCooldown % 10 !== 0) return;
 
-		const sessionFile = ctx.sessionManager.getSessionFile();
+		// ── Auto review (timed cadence) ──
 		pi.sendUserMessage(
-			"\u{200b}REVIEW TASK (skill evolution): Look back at this session. Did you just\n" +
-				"complete a complex task, fix a tricky error, discover a new workflow, or\n" +
-				"recover from an unexpected failure? If yes, use the skill_manage tool to\n" +
-				"create or patch a skill that captures what you learned. Be proactive — most\n" +
-				"sessions produce at least one skill update. Prefer patching an existing\n" +
-				"skill over creating a new one. If nothing noteworthy, reply \"no skill update needed\".\n" +
-				`Session file: ${sessionFile ?? "ephemeral"}`,
+			`\u{200b}⚡ [${new Date().toISOString().slice(0, 19).replace('T', ' ')}] Consider saving noteworthy workflows as skills via skill_manage. If nothing noteworthy, reply "no skill update needed".`,
 			{ deliverAs: "followUp" },
 		);
 	});
 
 	// ─── Weekly inactive-skill reminder (on session_start) ─────────────
 
-	pi.on("session_start", (_event, ctx) => {
+	pi.on("session_start", (_event, _ctx) => {
 		const stats = readStats(SKILLS_DIR);
 		if (!stats.reminderEnabled) return;
 
@@ -432,7 +426,10 @@ export default function (pi: ExtensionAPI) {
 			if (err)
 				return {
 					content: [
-						{ type: "text" as const, text: `Invalid skill name "${skillName}": ${err}` },
+						{
+							type: "text" as const,
+							text: `Invalid skill name "${skillName}": ${err}`,
+						},
 					],
 					isError: true,
 					details: {},
@@ -460,7 +457,10 @@ export default function (pi: ExtensionAPI) {
 					const section = text.includes(params.content)
 						? params.content
 						: text.slice(0, 2000);
-					return { content: [{ type: "text" as const, text: section }], details: {} };
+					return {
+						content: [{ type: "text" as const, text: section }],
+						details: {},
+					};
 				}
 				return { content: [{ type: "text" as const, text }], details: {} };
 			}
@@ -470,7 +470,10 @@ export default function (pi: ExtensionAPI) {
 				if (!desc)
 					return {
 						content: [
-							{ type: "text" as const, text: 'Missing "description" for create' },
+							{
+								type: "text" as const,
+								text: 'Missing "description" for create',
+							},
 						],
 						isError: true,
 						details: {},
@@ -520,7 +523,9 @@ export default function (pi: ExtensionAPI) {
 				const desc = params.description;
 				if (!desc)
 					return {
-						content: [{ type: "text" as const, text: 'Missing "description" for edit' }],
+						content: [
+							{ type: "text" as const, text: 'Missing "description" for edit' },
+						],
 						isError: true,
 						details: {},
 					};
@@ -555,7 +560,9 @@ export default function (pi: ExtensionAPI) {
 					};
 				if (!params.find)
 					return {
-						content: [{ type: "text" as const, text: 'Missing "find" for patch' }],
+						content: [
+							{ type: "text" as const, text: 'Missing "find" for patch' },
+						],
 						isError: true,
 						details: {},
 					};
@@ -605,7 +612,10 @@ export default function (pi: ExtensionAPI) {
 				if (!existsSync(skillPath))
 					return {
 						content: [
-							{ type: "text" as const, text: `Skill "${skillName}" not found.` },
+							{
+								type: "text" as const,
+								text: `Skill "${skillName}" not found.`,
+							},
 						],
 						isError: true,
 						details: {},
@@ -618,13 +628,17 @@ export default function (pi: ExtensionAPI) {
 				}
 				recordSkillUsage(SKILLS_DIR, skillName, "delete");
 				return {
-					content: [{ type: "text" as const, text: `Deleted skill "${skillName}"` }],
+					content: [
+						{ type: "text" as const, text: `Deleted skill "${skillName}"` },
+					],
 					details: {},
 				};
 			}
 
 			return {
-				content: [{ type: "text" as const, text: `Unknown operation: ${operation}` }],
+				content: [
+					{ type: "text" as const, text: `Unknown operation: ${operation}` },
+				],
 				isError: true,
 				details: {},
 			};
@@ -644,6 +658,7 @@ export default function (pi: ExtensionAPI) {
 				"reminder check",
 				"inactive",
 				"stats",
+				"review now",
 				"disable ",
 				"enable ",
 			];
@@ -655,6 +670,21 @@ export default function (pi: ExtensionAPI) {
 		},
 		handler: async (args, ctx) => {
 			const trimmed = args.trim();
+
+			// ── review subcommand ──
+
+			if (trimmed === "review now") {
+				const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+				const inactive = getInactiveSkills(SKILLS_DIR, readStats(SKILLS_DIR));
+				const hint = inactive.length > 0
+					? ` (${inactive.length} inactive skill(s) — review them too)`
+					: '';
+				pi.sendUserMessage(
+					`\u{200b}⚡ [${now}] Manual review triggered${hint}. Consider saving noteworthy workflows as skills via skill_manage. If nothing noteworthy, reply "no skill update needed".`,
+					{ deliverAs: "followUp" },
+				);
+				return;
+			}
 
 			// ── reminder subcommands ──
 
@@ -682,7 +712,10 @@ export default function (pi: ExtensionAPI) {
 
 			if (trimmed === "reminder status") {
 				const stats = readStats(SKILLS_DIR);
-				ctx.ui.notify(buildReminderText(stats.reminderEnabled, stats.lastReminderCheck), "info");
+				ctx.ui.notify(
+					buildReminderText(stats.reminderEnabled, stats.lastReminderCheck),
+					"info",
+				);
 				return;
 			}
 
@@ -711,7 +744,10 @@ export default function (pi: ExtensionAPI) {
 				const stats = readStats(SKILLS_DIR);
 				const inactive = getInactiveSkills(SKILLS_DIR, stats);
 				if (inactive.length === 0) {
-					ctx.ui.notify("✅ All skills are active (used within 30 days)", "info");
+					ctx.ui.notify(
+						"✅ All skills are active (used within 30 days)",
+						"info",
+					);
 					return;
 				}
 				ctx.ui.notify(inactiveReportLines(inactive).join("\n"), "info");
@@ -731,7 +767,10 @@ export default function (pi: ExtensionAPI) {
 			if (trimmed.startsWith("disable ")) {
 				const targetName = trimmed.slice(8).trim();
 				if (!targetName) {
-					ctx.ui.notify("Usage: /skill-evolution disable <skill-name>", "error");
+					ctx.ui.notify(
+						"Usage: /skill-evolution disable <skill-name>",
+						"error",
+					);
 					return;
 				}
 				const targetDir = join(SKILLS_DIR, targetName);
@@ -781,6 +820,7 @@ export default function (pi: ExtensionAPI) {
 
 			ctx.ui.notify(
 				"📋 **Skill Evolution Commands**\n\n" +
+					"/skill-evolution review now        — Trigger a skill review session now\n" +
 					"/skill-evolution reminder on      — Enable weekly inactive-skill reminder\n" +
 					"/skill-evolution reminder off     — Disable weekly reminder\n" +
 					"/skill-evolution reminder status  — Show reminder status\n" +

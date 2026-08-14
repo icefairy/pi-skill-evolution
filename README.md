@@ -119,14 +119,9 @@ On `before_agent_start`, appends:
 
 ### Background review loop
 
-On `agent_settled` (every 3rd settled event to prevent spam), sends a follow-up
-message that asks the agent to review the completed session and create or patch
-skills with `skill_manage`:
+On `agent_settled` (every 10th settled event), sends a brief one-line follow-up prompt that asks the agent to review the completed session and create or patch skills with `skill_manage`. The message is kept minimal (single line with timestamp) so it does not clutter the conversation history.
 
-> Review this session. Did you just complete a complex task, fix a tricky error,
-> discover a new workflow, or recover from an unexpected failure? If yes, use
-> skill_manage to create or patch a skill. Be proactive — most sessions produce
-> at least one skill update.
+You can also trigger a review manually at any time with `/skill-evolution review now`.
 
 ### `/skill-evolution` command (extended)
 
@@ -136,6 +131,7 @@ usage tracking and inactive-skill reminders. All settings are persisted to
 
 | Command | What it does |
 | --------- | ------------ |
+| `/skill-evolution review now` | Manually trigger a skill review session |
 | `/skill-evolution reminder on` | Enable weekly inactive-skill reminder (default) |
 | `/skill-evolution reminder off` | Disable the weekly reminder |
 | `/skill-evolution reminder status` | Show whether reminders are on/off + last check time |

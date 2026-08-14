@@ -1,6 +1,6 @@
 {
   "name": "pi-agent-skill-evolution",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Hermes Agent-style automated skill creation and evolution for Pi Agent",
   "type": "module",
   "main": "./extensions/skill-evolution.ts",
