@@ -336,7 +336,7 @@ export default function (pi: ExtensionAPI) {
 
 		// ── Auto review (timed cadence) ──
 		pi.sendUserMessage(
-			`\u{200b}⚡ [${new Date().toISOString().slice(0, 19).replace('T', ' ')}] Consider saving noteworthy workflows as skills via skill_manage. If nothing noteworthy, reply "no skill update needed".`,
+			`\u{200b}⚡ [${new Date().toISOString().slice(0, 19).replace("T", " ")}] Consider saving noteworthy workflows as skills via skill_manage. If nothing noteworthy, reply "no skill update needed".`,
 			{ deliverAs: "followUp" },
 		);
 	});
@@ -674,11 +674,12 @@ export default function (pi: ExtensionAPI) {
 			// ── review subcommand ──
 
 			if (trimmed === "review now") {
-				const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+				const now = new Date().toISOString().slice(0, 19).replace("T", " ");
 				const inactive = getInactiveSkills(SKILLS_DIR, readStats(SKILLS_DIR));
-				const hint = inactive.length > 0
-					? ` (${inactive.length} inactive skill(s) — review them too)`
-					: '';
+				const hint =
+					inactive.length > 0
+						? ` (${inactive.length} inactive skill(s) — review them too)`
+						: "";
 				pi.sendUserMessage(
 					`\u{200b}⚡ [${now}] Manual review triggered${hint}. Consider saving noteworthy workflows as skills via skill_manage. If nothing noteworthy, reply "no skill update needed".`,
 					{ deliverAs: "followUp" },
