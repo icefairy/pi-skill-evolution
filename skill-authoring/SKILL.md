@@ -25,6 +25,13 @@ Does two jobs: state what the skill is AND list branches that should trigger it.
 - **One trigger per branch** — synonyms of one branch = duplication
 - **Cut identity already in the body**
 - ≤ 1024 characters
+- **YAML-safe** — the description lands in frontmatter. A bare `description:` followed
+  by a scalar containing `:` (colon+space) or a leading indicator (`#`, `-`, `[`, `{`,
+  `:`, `>`, `|`, `&`, `*`, `!`, `%`, `@`, backtick, quotes) breaks YAML and causes
+  a `Nested mappings are not allowed` warning at pi startup. Prefer phrasing that
+  avoids colons entirely (e.g. `Extracts tables from PDFs. Use when working with PDFs.`
+  instead of `Transactions: parse receipts`). If you must use a colon, wrap the whole
+  `description` value in double quotes: `description: "Parses receipts. Steps: read, classify."`
 
 Good: `Extracts text and tables from PDFs. Use when working with PDF documents.`
 Bad: `Helps with PDFs.`
@@ -42,6 +49,7 @@ Each step ends on a **completion criterion** — checkable and exhaustive. Vague
 ## Progressive disclosure
 
 Push material behind context pointers when:
+
 - Only some branches reach it (split by branch)
 - A completion criterion would tempt the agent to skip ahead (split by sequence)
 - Reference material is long but needed on demand
@@ -58,6 +66,7 @@ Use compact pretrained concepts (`lesson`, `fog of war`, `tracer bullets`, `tigh
 ## Pruning
 
 Check every line:
+
 1. **Single source of truth** — one authoritative place for each meaning
 2. **Relevance** — does it still bear on what the skill does?
 3. **No-op test** — does it change behavior vs the default? If no, delete it

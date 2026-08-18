@@ -143,8 +143,7 @@ function getInactiveSkills(
 
 	inactive.sort(
 		(a, b) =>
-			new Date(a.entry.lastUsed).getTime() -
-			new Date(b.entry.lastUsed).getTime(),
+			new Date(a.entry.lastUsed).getTime() - new Date(b.entry.lastUsed).getTime(),
 	);
 
 	return inactive;
@@ -175,8 +174,35 @@ function parseFrontmatter(text: string): {
 	return { name: fm.name, description: fm.description, raw: m[2] };
 }
 
+/**
+ * Escape a skill description so it is safe as a YAML frontmatter scalar.
+ * A bare description containing a colon followed by a space (or starting on
+ * special YAML indicators) would be parsed as a nested mapping and break the
+ * frontmatter, producing a "Nested mappings are not allowed" warning at pi
+ * startup. Wrap it in double quotes (escaping backslashes and quotes) when any
+ * such character is present, so descriptions freely use "Covers:", colons, #,
+ * quotes, curly braces, etc.
+ */
+function yamlSafeScalar(value: string, forceQuote: boolean): string {
+	// Characters that force double-quoting in a plain YAML scalar:
+	//   ": " (colon + space), leading indicator chars, or structural symbols.
+	const needsQuote =
+		forceQuote ||
+		/[:]\s/.test(value) ||
+		/^[-?:,[\]{}#&*!|>'"%@`]/u.test(value) ||
+		/[[\]{}&*!|'"%@`]/.test(value);
+	if (!needsQuote) return value.trim();
+	const escaped = value.trim().replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+	// Also guard control characters that are invalid inside a double-quoted scalar.
+	const sanitized = escaped.replace(
+		/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,
+		" ",
+	);
+	return `"${sanitized}"`;
+}
+
 function buildSkillMd(name: string, description: string, body: string): string {
-	return `---\nname: ${name}\ndescription: ${description.trim()}\n---\n\n${body.trim()}\n`;
+	return `---\nname: ${name}\ndescription: ${yamlSafeScalar(description, false)}\n---\n\n${body.trim()}\n`;
 }
 
 function validateName(name: string): string | null {
@@ -195,9 +221,7 @@ function listSkills(skillsDir: string) {
 			content: [
 				{
 					type: "text" as const,
-					text:
-						"No skills directory found. Skills will be created in: " +
-						skillsDir,
+					text: "No skills directory found. Skills will be created in: " + skillsDir,
 				},
 			],
 			details: {},
@@ -560,9 +584,7 @@ export default function (pi: ExtensionAPI) {
 					};
 				if (!params.find)
 					return {
-						content: [
-							{ type: "text" as const, text: 'Missing "find" for patch' },
-						],
+						content: [{ type: "text" as const, text: 'Missing "find" for patch' }],
 						isError: true,
 						details: {},
 					};
@@ -628,9 +650,7 @@ export default function (pi: ExtensionAPI) {
 				}
 				recordSkillUsage(SKILLS_DIR, skillName, "delete");
 				return {
-					content: [
-						{ type: "text" as const, text: `Deleted skill "${skillName}"` },
-					],
+					content: [{ type: "text" as const, text: `Deleted skill "${skillName}"` }],
 					details: {},
 				};
 			}
@@ -745,10 +765,7 @@ export default function (pi: ExtensionAPI) {
 				const stats = readStats(SKILLS_DIR);
 				const inactive = getInactiveSkills(SKILLS_DIR, stats);
 				if (inactive.length === 0) {
-					ctx.ui.notify(
-						"✅ All skills are active (used within 30 days)",
-						"info",
-					);
+					ctx.ui.notify("✅ All skills are active (used within 30 days)", "info");
 					return;
 				}
 				ctx.ui.notify(inactiveReportLines(inactive).join("\n"), "info");
@@ -768,10 +785,7 @@ export default function (pi: ExtensionAPI) {
 			if (trimmed.startsWith("disable ")) {
 				const targetName = trimmed.slice(8).trim();
 				if (!targetName) {
-					ctx.ui.notify(
-						"Usage: /skill-evolution disable <skill-name>",
-						"error",
-					);
+					ctx.ui.notify("Usage: /skill-evolution disable <skill-name>", "error");
 					return;
 				}
 				const targetDir = join(SKILLS_DIR, targetName);
